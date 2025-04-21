@@ -2,9 +2,9 @@
 import RPi.GPIO as GPIO
 import time
 
-#nuistID:202283890005
-#SetuID:20110009
-#Di Wu
+#nuistID:202283890010
+#SetuID:20110014
+#Meng jintong
 
 #GPIO SETUP
 channel = 4
