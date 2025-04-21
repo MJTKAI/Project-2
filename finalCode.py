@@ -12,9 +12,9 @@ last_status = None     # 上一次状态记录
 # ===== 邮箱配置 (163示例) =====
 SMTP_SERVER = 'smtp.163.com'
 SMTP_PORT = 25
-SENDER_EMAIL = "nuist202283890005@163.com"
-SENDER_PASSWORD = "BCNqp7YjdFUZZKYL"  # 授权码
-RECEIVER_EMAIL = "nuist202283890005@163.com"
+SENDER_EMAIL = "19852895328@163.com"
+SENDER_PASSWORD = "MPphAZGVA3mTDKsX"  # 授权码
+RECEIVER_EMAIL = "58866248@qq.com"
 
 # ===== GPIO初始化 =====
 def setup_gpio():
@@ -32,8 +32,8 @@ def status_changed(channel):
     
     # 状态映射 (0=干燥需要浇水，1=湿润)
     status_map = {
-        0: ("需要浇水！", "[警报] 植物缺水"),
-        1: ("水分充足", "[正常] 植物状态良好")
+        0: ("It needs watering！", "[warning] Plants are short of water"),
+        1: ("Adequate moisture", "[normal] The plants arein good condition")
     }
     
     # 仅当状态变化时发送邮件
