@@ -1,49 +1,40 @@
 #!/usr/bin/env python3
+
+#Use Comments
+#Program Title: Moniter soil humidity
+#Program Description: Send an email every three hours to report the condition of the soil and whether watering is required
+#Name: Meng jintong
+#Student ID: 202283890010    20110014
+#Course and year: ProjectSmester 2025
+#Date: 21/4/25
+
 import RPi.GPIO as GPIO
 import smtplib
 import time
 from email.message import EmailMessage
 
-# ===== 传感器配置 =====
-SENSOR_PIN = 4        # GPIO4 (BCM编号)
-CHECK_INTERVAL = 0.006     # 检测间隔（小时）
-last_status = None     # 上一次状态记录
+# ===== Sensor Configuration =====
+SENSOR_PIN = 4         # GPIO4 (BCM numbering)
+CHECK_INTERVAL = 3     # Check interval (hours)
+status_map = {
+    1: ("Water needed!", "[Alert] Plant needs water"),
+    0: ("Moisture sufficient", "[OK] Plant status normal")
+}
 
-# ===== 邮箱配置 (163示例) =====
+# ===== Email Configuration (163 example) =====
 SMTP_SERVER = 'smtp.163.com'
 SMTP_PORT = 25
 SENDER_EMAIL = "19852895328@163.com"
-SENDER_PASSWORD = "MPphAZGVA3mTDKsX"  # 授权码
+SENDER_PASSWORD = "MPphAZGVA3mTDKsX"  # Authorization code
 RECEIVER_EMAIL = "58866248@qq.com"
 
-# ===== GPIO初始化 =====
+# ===== GPIO Initialization =====
 def setup_gpio():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(SENSOR_PIN, GPIO.IN)
-    GPIO.add_event_detect(SENSOR_PIN, GPIO.BOTH, 
-                        callback=status_changed, 
-                        bouncetime=300)
-    print("GPIO初始化完成")
+    print("GPIO initialization completed")
 
-# ===== 传感器状态变化回调 =====
-def status_changed(channel):
-    global last_status
-    current_status = GPIO.input(channel)
-    
-    # 状态映射 (0=干燥需要浇水，1=湿润)
-    status_map = {
-        0: ("It needs watering！", "[warning] Plants are short of water"),
-        1: ("Adequate moisture", "[normal] The plants arein good condition")
-    }
-    
-    # 仅当状态变化时发送邮件
-    
-    message, subject = status_map[current_status]
-    send_email(subject, f"检测时间: {time.strftime('%Y-%m-%d %H:%M')}\n当前状态: {message}")
-    last_status = current_status
-    print(f"状态变化: {message}")
-
-# ===== 邮件发送函数 =====
+# ===== Email Sending Function =====
 def send_email(subject, body):
     try:
         msg = EmailMessage()
@@ -52,25 +43,40 @@ def send_email(subject, body):
         msg['From'] = SENDER_EMAIL
         msg['To'] = RECEIVER_EMAIL
 
-        # 使用SSL加密连接
-        with smtplib.SMTP() as server:
-            server.connect(SMTP_SERVER,SMTP_PORT)
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.login(SENDER_EMAIL, SENDER_PASSWORD)
             server.send_message(msg)
-            print("邮件发送成功")
+            print("Email sent successfully")
 
     except Exception as e:
-        print(f"邮件发送失败: {str(e)}")
+        print(f"Email sending failed: {str(e)}")
 
-# ===== 主程序 =====
+# ===== Main Program =====
 if __name__ == "__main__":
     try:
         setup_gpio()
-        print("植物监控系统已启动...")
+        check_interval = CHECK_INTERVAL * 3600  # Convert to seconds
+        
+        print(f"Plant monitoring system started, reporting every {CHECK_INTERVAL} hours...")
+        
         while True:
-            time.sleep(60)  # 保持主线程运行
+            # Read sensor status
+            current_status = GPIO.input(SENSOR_PIN)
+            
+            # Generate email content
+            message, subject = status_map[current_status]
+            email_body = f"""\
+Detection time: {time.strftime('%Y-%m-%d %H:%M')}
+Current status: {message}
+Sensor reading: {'Dry' if current_status else 'Wet'}"""
+            
+            # Send status report
+            send_email(subject, email_body)
+            
+            # Wait for next cycle
+            time.sleep(check_interval)
 
     except KeyboardInterrupt:
-        print("\n程序终止")
+        print("\nProgram terminated")
     finally:
         GPIO.cleanup()
